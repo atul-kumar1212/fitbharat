@@ -1,14 +1,19 @@
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { ChevronRight, Sun, Moon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronRight, Sun, Moon, LogOut, Crown } from 'lucide-react';
 
 export default function Profile() {
   const { user, updateUser, getBMI, getBMICategory, getBMR } = useUser();
+  const { logout, authUser } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState({ ...user });
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const bmi = getBMI();
   const bmiCat = getBMICategory(bmi);
@@ -26,11 +31,17 @@ export default function Profile() {
     setEditMode(false);
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   const menuItems = [
     { icon: '📊', label: 'BMI Calculator', sub: `Current: ${bmi}`, color: '#f97316', action: () => setActiveTab('bmi') },
-    { icon: '🎯', label: 'Fitness Goal', sub: user.goal === 'muscleGain' ? 'Muscle Gain' : user.goal === 'weightLoss' ? 'Weight Loss' : 'Stay Fit', color: '#06b6d4', action: () => setEditMode(true) },
+    { icon: '🍛', label: 'Diet Plans', sub: 'Indian diet & nutrition', color: '#06b6d4', action: () => navigate('/diet') },
+    { icon: '🎯', label: 'Fitness Goal', sub: user.goal === 'muscleGain' ? 'Muscle Gain' : user.goal === 'weightLoss' ? 'Weight Loss' : 'Stay Fit', color: '#22c55e', action: () => setEditMode(true) },
     { icon: '✏️', label: 'Edit Profile', sub: 'Update your details', color: '#8b5cf6', action: () => setEditMode(true) },
-    { icon: '📈', label: 'Workout History', sub: `${user.totalWorkouts} workouts done`, color: '#22c55e', action: () => setActiveTab('history') },
+    { icon: '📈', label: 'Workout History', sub: `${user.totalWorkouts} workouts done`, color: '#ec4899', action: () => setActiveTab('history') },
+    { icon: '👑', label: 'Upgrade Plan', sub: 'Get premium features', color: '#f59e0b', action: () => navigate('/plans') },
   ];
 
   if (activeTab === 'bmi') {
@@ -50,6 +61,11 @@ export default function Profile() {
         </div>
         <div className="profile-name">{user.name}</div>
         <div className="profile-bio">
+          {authUser?.email && (
+            <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-tertiary)', marginBottom: '4px' }}>
+              {authUser.email}
+            </span>
+          )}
           {user.goal === 'muscleGain' ? '💪 Building Muscle' :
             user.goal === 'weightLoss' ? '🔥 Losing Weight' :
               user.goal === 'flexibility' ? '🧘 Improving Flexibility' : '🏃 Staying Fit'
@@ -140,6 +156,17 @@ export default function Profile() {
         ))}
       </div>
 
+      {/* Logout Button */}
+      <div style={{ marginTop: 'var(--space-xl)' }}>
+        <button
+          className="btn btn-full logout-btn"
+          onClick={() => setShowLogoutConfirm(true)}
+        >
+          <LogOut size={18} />
+          Logout
+        </button>
+      </div>
+
       {/* App Info */}
       <div style={{
         textAlign: 'center', padding: 'var(--space-xl) 0',
@@ -149,6 +176,29 @@ export default function Profile() {
         <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>FitBharat v1.0</div>
         <div>Made with ❤️ in India 🇮🇳</div>
       </div>
+
+      {/* Logout Confirm Modal */}
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'center' }}>
+            <div className="modal-handle" />
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>👋</div>
+            <h2 className="heading-lg" style={{ marginBottom: '8px' }}>Logout?</h2>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+              Are you sure you want to logout? Your data will be saved locally.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button className="btn btn-secondary btn-full" onClick={() => setShowLogoutConfirm(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-full logout-btn" onClick={handleLogout}>
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {editMode && (
@@ -354,7 +404,7 @@ function WorkoutHistory({ user, onBack }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{w.type}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '12px', marginTop: '2px' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '12px', marginTop: '2px', flexWrap: 'wrap' }}>
               <span>⏱ {w.duration}</span>
               <span>🔥 {w.calories} cal</span>
               <span>💪 {w.exercises} ex</span>

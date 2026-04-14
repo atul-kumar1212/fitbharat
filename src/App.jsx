@@ -1,19 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { UserProvider, useUser } from './context/UserContext';
-import { Home, Dumbbell, UtensilsCrossed, Bot, User } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { Home, Dumbbell, UtensilsCrossed, Bot, User, Crown } from 'lucide-react';
 
+import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Exercises from './pages/Exercises';
 import Diet from './pages/Diet';
 import AIChat from './pages/AIChat';
 import Profile from './pages/Profile';
+import Plans from './pages/Plans';
 
 import './index.css';
 
 function AppContent() {
   const { isOnboarded } = useUser();
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   if (!isOnboarded) {
     return <Onboarding />;
@@ -27,6 +35,7 @@ function AppContent() {
         <Route path="/diet" element={<Diet />} />
         <Route path="/ai" element={<AIChat />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/plans" element={<Plans />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
@@ -40,9 +49,9 @@ function AppContent() {
           <Dumbbell size={22} />
           <span>Workout</span>
         </NavLink>
-        <NavLink to="/diet" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UtensilsCrossed size={22} />
-          <span>Diet</span>
+        <NavLink to="/plans" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <Crown size={22} />
+          <span>Plans</span>
         </NavLink>
         <NavLink to="/ai" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
           <Bot size={22} />
@@ -60,13 +69,15 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <UserProvider>
-        <Router>
-          <div className="app-container">
-            <AppContent />
-          </div>
-        </Router>
-      </UserProvider>
+      <AuthProvider>
+        <UserProvider>
+          <Router>
+            <div className="app-container">
+              <AppContent />
+            </div>
+          </Router>
+        </UserProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
